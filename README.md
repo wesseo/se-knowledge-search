@@ -18,7 +18,7 @@ Unified search across Slack, Gong, Google Workspace, and Highspot for SE teams.
 ### 1. Clone and Install
 
 ```bash
-git clone <repo-url> se-knowledge-search
+git clone git@github.com:amperity/se-knowledge-search.git
 cd se-knowledge-search
 ./setup.sh
 ```
@@ -149,6 +149,18 @@ Uses the existing Google Workspace MCP connector for:
 
 ## Slack App Setup (Detailed)
 
+### Option A: Use the Manifest (Easiest)
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps)
+2. Click **"Create New App"** → **"From an app manifest"**
+3. Select your workspace
+4. Paste the contents of `slack-app-manifest.yaml` from this repo
+5. Click **"Create"**
+6. Click **"Install to Workspace"** and approve
+7. Go to **"OAuth & Permissions"** → Copy the **Bot User OAuth Token** (starts with `xoxb-`)
+
+### Option B: Manual Setup
+
 1. Go to [api.slack.com/apps](https://api.slack.com/apps)
 2. Click "Create New App" → "From scratch"
 3. Name it "SE Knowledge Search" and select your workspace
@@ -160,6 +172,7 @@ Uses the existing Google Workspace MCP connector for:
    - `groups:read` - List private channels (optional)
    - `groups:history` - Read private channel messages (optional)
    - `users:read` - Get user names
+   - `files:read` - Read shared files
 6. Click "Install to Workspace"
 7. Copy the **Bot User OAuth Token** (starts with `xoxb-`)
 

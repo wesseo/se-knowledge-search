@@ -1,0 +1,31 @@
+display_information:
+  name: SE Knowledge Search
+  description: Search Slack messages and files for SE tribal knowledge
+  background_color: "#4A154B"
+
+features:
+  bot_user:
+    display_name: SE Knowledge Search
+    always_online: true
+
+oauth_config:
+  scopes:
+    bot:
+      # Search
+      - search:read
+      # Channels
+      - channels:read
+      - channels:history
+      - channels:join
+      # Private channels (optional - remove if not needed)
+      - groups:read
+      - groups:history
+      # Users
+      - users:read
+      # Files
+      - files:read
+
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
