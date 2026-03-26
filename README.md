@@ -27,10 +27,10 @@ cd se-knowledge-search
 
 | Service | Where to Get It |
 |---------|-----------------|
-| **Slack** | [api.slack.com/apps](https://api.slack.com/apps) → Create App → OAuth & Permissions → Bot Token |
+| **Slack** | Extract `xoxc-` and `xoxd-` tokens from browser (see [Slack Setup](#slack-setup-detailed)) |
 | **Gong** | Gong Admin → Company Settings → API → Create Key |
 | **Highspot** | Highspot Admin → Integrations → API Keys |
-| **Google Workspace** | Already configured via MCP connector (see below) |
+| **Google Workspace** | Already configured via MCP connector |
 
 ### 3. Configure Environment
 
@@ -43,19 +43,11 @@ cp .env.template .env
 
 ### 4. Add to Claude Code
 
-**Option A: CLI (recommended)**
+**Option A: Use the config script (recommended)**
 
 ```bash
-# Export your env vars first (or add to shell profile)
-export SLACK_BOT_TOKEN="xoxb-..."
-export GONG_ACCESS_KEY="..."
-export GONG_ACCESS_KEY_SECRET="..."
-export HIGHSPOT_API_KEY="..."
-
-# Add each MCP server
-claude mcp add --scope user slack -- uv --directory /path/to/se-knowledge-search run slack-mcp
-claude mcp add --scope user gong -- uv --directory /path/to/se-knowledge-search run gong-mcp
-claude mcp add --scope user highspot -- uv --directory /path/to/se-knowledge-search run highspot-mcp
+# Edit .env with your credentials first
+python configure-claude.py
 ```
 
 **Option B: Manual config**
@@ -66,10 +58,11 @@ Add to `~/.claude.json`:
 {
   "mcpServers": {
     "slack": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/se-knowledge-search", "run", "slack-mcp"],
+      "command": "npx",
+      "args": ["-y", "@korotovsky/slack-mcp-server"],
       "env": {
-        "SLACK_BOT_TOKEN": "xoxb-your-token"
+        "SLACK_MCP_XOXC_TOKEN": "xoxc-...",
+        "SLACK_MCP_XOXD_TOKEN": "xoxd-..."
       }
     },
     "gong": {
@@ -122,12 +115,12 @@ The search skill will automatically query the relevant sources and synthesize re
 
 ## Available Tools
 
-### Slack
-- `slack.search_messages` - Search all accessible channels
-- `slack.search_files` - Find shared files
-- `slack.get_channel_history` - Browse recent channel messages
-- `slack.list_channels` - List available channels
-- `slack.get_thread` - Get full thread context
+### Slack (via [@korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server))
+- Search messages across channels
+- Read DMs and group DMs
+- Get unread messages
+- Browse channel history
+- Post messages (optional)
 
 ### Gong
 - `gong.search_calls` - Search call transcripts by keyword
@@ -147,34 +140,31 @@ Uses the existing Google Workspace MCP connector for:
 - Drive search
 - Docs/Sheets/Slides access
 
-## Slack App Setup (Detailed)
+## Slack Setup (Detailed)
 
-### Option A: Use the Manifest (Easiest)
+Uses [@korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server) - the most feature-rich Slack MCP with DMs, search, unread messages, and no bot installation required.
 
-1. Go to [api.slack.com/apps](https://api.slack.com/apps)
-2. Click **"Create New App"** → **"From an app manifest"**
-3. Select your workspace
-4. Paste the contents of `slack-app-manifest.yaml` from this repo
-5. Click **"Create"**
-6. Click **"Install to Workspace"** and approve
-7. Go to **"OAuth & Permissions"** → Copy the **Bot User OAuth Token** (starts with `xoxb-`)
+### Extract Tokens from Browser
 
-### Option B: Manual Setup
+1. Open [slack.com](https://app.slack.com) in Chrome and log into your workspace
+2. Open DevTools (F12) → **Application** tab → **Cookies**
+3. Find and copy these two cookies:
+   - `d` → This is your `SLACK_MCP_XOXD_TOKEN` (starts with `xoxd-`)
+   - `ds` → ignore this one
+4. Go to **Network** tab, filter by `api`, refresh the page
+5. Click any `api.slack.com` request → **Headers** → find `token=xoxc-...` in the request
+   - This is your `SLACK_MCP_XOXC_TOKEN`
 
-1. Go to [api.slack.com/apps](https://api.slack.com/apps)
-2. Click "Create New App" → "From scratch"
-3. Name it "SE Knowledge Search" and select your workspace
-4. Go to "OAuth & Permissions"
-5. Add these **Bot Token Scopes**:
-   - `search:read` - Search messages and files
-   - `channels:read` - List channels
-   - `channels:history` - Read channel messages
-   - `groups:read` - List private channels (optional)
-   - `groups:history` - Read private channel messages (optional)
-   - `users:read` - Get user names
-   - `files:read` - Read shared files
-6. Click "Install to Workspace"
-7. Copy the **Bot User OAuth Token** (starts with `xoxb-`)
+### Add to .env
+
+```bash
+SLACK_MCP_XOXC_TOKEN=xoxc-your-token-here
+SLACK_MCP_XOXD_TOKEN=xoxd-your-token-here
+```
+
+> **Note:** These are your personal user tokens. They give access to everything you can see in Slack. Keep them secure and don't share them.
+
+For detailed instructions with screenshots, see: [github.com/korotovsky/slack-mcp-server](https://github.com/korotovsky/slack-mcp-server)
 
 ## Gong API Setup
 
@@ -185,22 +175,19 @@ Uses the existing Google Workspace MCP connector for:
 
 ## Troubleshooting
 
-**"Authentication error: SLACK_BOT_TOKEN..."**
-- Make sure the env var is set and exported
-- Check the token starts with `xoxb-`
-
-**"Slack error: missing_scope"**
-- Your Slack app is missing required scopes
-- Go back to OAuth & Permissions and add the missing scope
-- Reinstall the app to your workspace
-
-**"No messages found"**
-- The bot can only search channels it has access to
-- Invite the bot to relevant channels: `/invite @SE Knowledge Search`
+**Slack: "Invalid token" or authentication errors**
+- Tokens expire when you log out of Slack in browser - re-extract them
+- Make sure you copied the full token including the `xoxc-` or `xoxd-` prefix
+- Check you're logged into the right workspace
 
 **Gong returns empty results**
 - Check date range - default is 90 days
 - Verify the search terms appear in transcripts (not just call titles)
+- You need Gong API access (admin must enable)
+
+**Highspot: 401/403 errors**
+- API key may have expired - generate a new one
+- Check the key has read permissions
 
 ## Development
 
@@ -209,9 +196,11 @@ Uses the existing Google Workspace MCP connector for:
 uv sync
 
 # Run individual servers for testing
-uv run slack-mcp
 uv run gong-mcp
 uv run highspot-mcp
+
+# Test Slack MCP
+npx @korotovsky/slack-mcp-server
 
 # Lint
 uv run ruff check src/

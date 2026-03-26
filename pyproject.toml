@@ -13,7 +13,6 @@ dependencies = [
 [project.scripts]
 gong-mcp = "se_knowledge_search.gong_server:main"
 highspot-mcp = "se_knowledge_search.highspot_server:main"
-slack-mcp = "se_knowledge_search.slack_server:main"
 
 [build-system]
 requires = ["hatchling"]

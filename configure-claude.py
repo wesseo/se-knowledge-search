@@ -38,18 +38,21 @@ def get_mcp_config(project_dir: str, env_vars: dict[str, str]) -> dict:
 
     config = {}
 
-    # Slack
-    slack_token = env_vars.get("SLACK_BOT_TOKEN") or os.environ.get("SLACK_BOT_TOKEN")
-    if slack_token:
+    # Slack (using korotovsky/slack-mcp-server)
+    slack_xoxc = env_vars.get("SLACK_MCP_XOXC_TOKEN") or os.environ.get("SLACK_MCP_XOXC_TOKEN")
+    slack_xoxd = env_vars.get("SLACK_MCP_XOXD_TOKEN") or os.environ.get("SLACK_MCP_XOXD_TOKEN")
+    if slack_xoxc and slack_xoxd:
         config["slack"] = {
-            "command": "uv",
-            "args": ["--directory", project_dir, "run", "slack-mcp"],
+            "command": "npx",
+            "args": ["-y", "@korotovsky/slack-mcp-server"],
             "env": {
-                "SLACK_BOT_TOKEN": slack_token
+                "SLACK_MCP_XOXC_TOKEN": slack_xoxc,
+                "SLACK_MCP_XOXD_TOKEN": slack_xoxd
             }
         }
     else:
-        print("⚠️  SLACK_BOT_TOKEN not found - skipping Slack MCP")
+        print("⚠️  SLACK_MCP_XOXC_TOKEN/XOXD_TOKEN not found - skipping Slack MCP")
+        print("   See: https://github.com/korotovsky/slack-mcp-server for token extraction")
 
     # Gong
     gong_key = env_vars.get("GONG_ACCESS_KEY") or os.environ.get("GONG_ACCESS_KEY")
