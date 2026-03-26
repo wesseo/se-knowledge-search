@@ -18,7 +18,7 @@ Unified search across Slack, Gong, Google Workspace, and Highspot for SE teams.
 ### 1. Clone and Install
 
 ```bash
-git clone git@github.com:amperity/se-knowledge-search.git
+git clone git@github.com:wesseo/se-knowledge-search.git
 cd se-knowledge-search
 ./setup.sh
 ```
